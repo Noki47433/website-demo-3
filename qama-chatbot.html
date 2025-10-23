@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotel Qama AI Demo</title>
+<style>
+body { font-family: sans-serif; margin:0; background:#fafafa; }
+.chat-button { position: fixed; bottom: 25px; right: 25px; background:#ffb300; color:white; border:none; border-radius:50%; width:65px; height:65px; font-size:28px; cursor:pointer; }
+.chat-window { position: fixed; bottom: 100px; right: 25px; width: 400px; height: 500px; background:white; border-radius:16px; box-shadow:0 8px 20px rgba(0,0,0,0.25); display: none; flex-direction: column; overflow:hidden; cursor:move; }
+.chat-header { background:#ffb300; color:white; padding:15px; font-weight:600; display:flex; justify-content:space-between; align-items:center; cursor:move; }
+.chat-body { flex:1; padding:10px; overflow-y:auto; font-size:14px; }
+.chat-input { display:flex; border-top:1px solid #ddd; }
+.chat-input input { flex:1; border:none; padding:10px; outline:none; }
+.chat-input button { background:#ffb300; color:white; border:none; padding:0 18px; cursor:pointer; }
+.msg { margin:8px 0; padding:8px 12px; border-radius:10px; max-width:80%; word-wrap: break-word; }
+.user { background:#ffecb3; margin-left:auto; }
+.bot { background:#eee; }
+.flag { font-size:20px; margin-left:5px; }
+.close-btn { background:none; border:none; color:white; font-size:18px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<button class="chat-button" id="chatBtn">💬</button>
+
+<div class="chat-window" id="chatWindow">
+  <div class="chat-header" id="chatHeader">
+    Qama Assistant
+    <div>
+      <span class="flag">🇬🇧</span>
+      <span class="flag">🇦🇱</span>
+      <span class="flag">🇹🇷</span>
+      <span class="flag">🇩🇪</span>
+      <button class="close-btn" id="closeBtn">✖</button>
+    </div>
+  </div>
+  <div class="chat-body" id="chatBody">
+    <div class="msg bot">👋 Welcome to Hotel Qama! Ask me anything in English, Albanian, Turkish, or German.</div>
+  </div>
+  <div class="chat-input">
+    <input type="text" id="userInput" placeholder="Type a message...">
+    <button id="sendBtn">Send</button>
+  </div>
+</div>
+
+<script>
+const chatBtn = document.getElementById("chatBtn");
+const chatWindow = document.getElementById("chatWindow");
+const chatBody = document.getElementById("chatBody");
+const userInput = document.getElementById("userInput");
+const sendBtn = document.getElementById("sendBtn");
+const closeBtn = document.getElementById("closeBtn");
+const chatHeader = document.getElementById("chatHeader");
+
+// Toggle chat
+chatBtn.addEventListener("click", () => {
+  chatWindow.style.display = chatWindow.style.display === "flex" ? "none" : "flex";
+});
+
+// Close chat
+closeBtn.addEventListener("click", () => {
+  chatWindow.style.display = "none";
+});
+
+// Drag chat
+let isDragging = false, offsetX, offsetY;
+chatHeader.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  offsetX = e.clientX - chatWindow.offsetLeft;
+  offsetY = e.clientY - chatWindow.offsetTop;
+});
+document.addEventListener("mouseup", () => isDragging = false);
+document.addEventListener("mousemove", (e) => {
+  if(isDragging){
+    chatWindow.style.left = (e.clientX - offsetX) + "px";
+    chatWindow.style.top = (e.clientY - offsetY) + "px";
+  }
+});
+
+// Add message with smooth scroll
+function addMessage(sender, text){
+  const msg = document.createElement("div");
+  msg.className = "msg " + (sender==="user"?"user":"bot");
+  msg.textContent = text;
+  chatBody.appendChild(msg);
+  chatBody.scrollTo({top: chatBody.scrollHeight, behavior: "smooth"});
+}
+
+// Language detection
+function detectLanguage(text){
+  text = text.toLowerCase();
+  if(/[a-z]/.test(text) && !/[çëşöüığ]/.test(text)) return "en";
+  if(/[çëş]/.test(text)) return "sq";
+  if(/[şıçö]/.test(text)) return "tr";
+  if(/[äöüß]/.test(text)) return "de";
+  return "en";
+}
+
+// Fake AI responses
+function getFakeAIResponse(message){
+  const lang = detectLanguage(message);
+  message = message.toLowerCase();
+  
+  const responses = {
+    en:{room:"We have Deluxe Queen and Deluxe Double rooms. Prices start at €50/night.",
+        restaurant:"Yes, our restaurant serves local and international dishes every day from 7am to 10pm.",
+        checkin:"Check-in is from 13:00 and check-out is at 11:00.",
+        wifi:"Yes, free Wi-Fi is available throughout the hotel.",
+        contact:"You can call us at +383 45 499 994 or email info@hotelqama.com.",
+        languages:"We speak English, Albanian, Turkish, and German.",
+        price:"Room prices start at €50 per night for Deluxe Queen and €60 for Deluxe Double.",
+        hello:"Hello! How can I help you today?",
+        thanks:"You’re welcome! 😊",
+        fallback:"I’m not sure about that. I can help with rooms, restaurant, check-in, Wi-Fi, contact, and languages."},
+    sq:{room:"Ne ofrojmë Dhomën Deluxe Queen dhe Deluxe Double. Çmimet fillojnë nga 50€/natë.",
+        restaurant:"Po, restoranti ynë ofron gatime lokale dhe ndërkombëtare çdo ditë nga ora 7 deri në 22.",
+        checkin:"Check-in fillon nga ora 13:00 dhe check-out është në 11:00.",
+        wifi:"Po, Wi-Fi falas është në dispozicion në të gjithë hotelin.",
+        contact:"Na mund të telefononi në +383 45 499 994 ose email info@hotelqama.com.",
+        languages:"Flasim anglisht, shqip, turqisht dhe gjermanisht.",
+        price:"Çmimet fillojnë nga 50€/natë për Deluxe Queen dhe 60€ për Deluxe Double.",
+        hello:"Përshëndetje! Si mund t'ju ndihmoj sot?",
+        thanks:"S’ka përse! 😊",
+        fallback:"Nuk jam i sigurt për këtë. Mund të ndihmoj për dhomat, restorantin, check-in, Wi-Fi, kontakt dhe gjuhët."},
+    tr:{room:"Deluxe Queen ve Deluxe Double odalarımız mevcut. Fiyatlar gecelik €50'den başlıyor.",
+        restaurant:"Evet, restoranımız her gün sabah 7'den akşam 10'a kadar yerel ve uluslararası yemekler sunuyor.",
+        checkin:"Check-in 13:00'ten itibaren, check-out ise 11:00'dir.",
+        wifi:"Evet, otel genelinde ücretsiz Wi-Fi mevcuttur.",
+        contact:"Bize +383 45 499 994 numarasından veya info@hotelqama.com adresinden ulaşabilirsiniz.",
+        languages:"İngilizce, Arnavutça, Türkçe ve Almanca konuşuyoruz.",
+        price:"Deluxe Queen için gecelik €50, Deluxe Double için €60'dan başlayan fiyatlar.",
+        hello:"Merhaba! Size bugün nasıl yardımcı olabilirim?",
+        thanks:"Rica ederim! 😊",
+        fallback:"Bununla ilgili emin değilim. Odalar, restoran, check-in, Wi-Fi, iletişim ve diller hakkında yardımcı olabilirim."},
+    de:{room:"Wir haben Deluxe Queen und Deluxe Double Zimmer. Preise beginnen bei 50€/Nacht.",
+        restaurant:"Ja, unser Restaurant serviert täglich von 7 bis 22 Uhr lokale und internationale Gerichte.",
+        checkin:"Check-in ist ab 13:00 Uhr, Check-out um 11:00 Uhr.",
+        wifi:"Ja, kostenloses WLAN ist im gesamten Hotel verfügbar.",
+        contact:"Sie können uns unter +383 45 499 994 anrufen oder info@hotelqama.com schreiben.",
+        languages:"Wir sprechen Englisch, Albanisch, Türkisch und Deutsch.",
+        price:"Die Zimmerpreise beginnen bei 50€/Nacht für Deluxe Queen und 60€ für Deluxe Double.",
+        hello:"Hallo! Wie kann ich Ihnen heute helfen?",
+        thanks:"Gern geschehen! 😊",
+        fallback:"Ich bin mir nicht sicher. Ich kann bei Zimmern, Restaurant, Check-in, WLAN, Kontakt und Sprachen helfen."}
+  };
+
+  if(message.includes("room") || message.includes("deluxe") || message.includes("dhom") || message.includes("oda")) return responses[lang].room;
+  if(message.includes("restaurant") || message.includes("food") || message.includes("ushqim") || message.includes("yemek")) return responses[lang].restaurant;
+  if(message.includes("check-in") || message.includes("arrival") || message.includes("kur fillon") || message.includes("giris")) return responses[lang].checkin;
+  if(message.includes("wifi") || message.includes("internet")) return responses[lang].wifi;
+  if(message.includes("contact") || message.includes("number") || message.includes("email") || message.includes("kontakt")) return responses[lang].contact;
+  if(message.includes("languages") || message.includes("gjuha") || message.includes("dil")) return responses[lang].languages;
+  if(message.includes("price") || message.includes("çmimi") || message.includes("kosten")) return responses[lang].price;
+  if(message.includes("hello") || message.includes("hi") || message.includes("merhaba") || message.includes("pershendetje")) return responses[lang].hello;
+  if(message.includes("thank") || message.includes("faleminderit")) return responses[lang].thanks;
+
+  return responses[lang].fallback;
+}
+
+// Send message with typing animation
+sendBtn.addEventListener("click", () => {
+  const message = userInput.value.trim();
+  if(!message) return;
+  addMessage("user", message);
+  userInput.value = "";
+
+  const typingMsg = document.createElement("div");
+  typingMsg.className = "msg bot";
+  typingMsg.textContent = "Qama Assistant is typing...";
+  chatBody.appendChild(typingMsg);
+  chatBody.scrollTo({top: chatBody.scrollHeight, behavior: "smooth"});
+
+  const reply = getFakeAIResponse(message);
+  setTimeout(() => {
+    typingMsg.remove();
+    addMessage("bot", reply);
+  }, 800 + Math.random()*800);
+});
+</script>
+
+</body>
+</html>
